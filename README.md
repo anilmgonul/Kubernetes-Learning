@@ -191,3 +191,46 @@ Son asamada ise [Lens "The Kubernetes IDE"](https://k8slens.dev/) Kubernetes pla
 ![alt](workloads_overview.png)
 
 ![alt](workloads_pods.png)
+
+
+### Introduction to Networking
+
+Biliyoruz ki Kubernetes deploymentlari yonetmek ve otomatik hale getirmekte kullandigimiz acik kaynak platformdur. Bunun yani sira, cluster yani kumemiz icerisinde konteynerlarin bakimini yapabilme, zaman cizelgesini takip etme, ve operasyonu yurutmede olanak sagliyor.
+
+Bunun otesinde, Kubernetes networking , ag yapilari, kubernetes bilesenlerinin kendi aralarinda ve bir baska uygulamayla iletisim haline gecmesine olanak sagliyor. Kubernetes platformu, ana bilgisayar baglantı noktalarini konteynar baglanti noktalarina esleme ihtiyacini ortadan kaldiran duz bir ag yapisina dayandigindan diger ag platformlarindan farklidir.
+
+Bu asamada, basit bir networking uygulamasinin HTTP server'ina baglanmasini gorecegiz. Bir port secilmesi gerekiyor ve port 3000'den default olarak yararlanacagiz.
+
+```COMMAND
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/deployment.yaml
+  deployment.apps/hashresponse-dep created
+```
+
+Bu kisimda, cluster'in disindan baglanmayi deneyecegiz. Olusturdugumuz *hashresponse-dep* pod'unu calistigini ise `port-forward` komutu ile gorebiliriz.
+
+```COMMAND
+$ kubectl get pods
+NAME                                 READY   STATUS    RESTARTS        AGE
+hashgenerator-dep-548d4d6c8d-mrnsl   1/1     Running   1 (2m17s ago)   8h
+hashresponse-dep-869df48685-pshdz    1/1     Running   0               46s
+```
+
+`$ kubectl port-forward hashresponse-dep-869df48685-pshdz 3003:3000`
+
+![alt](port_forward.png)
+
+Sonrasinda ise, baglantimizi [http://localhost:3003](http://localhost:3003/) adresinden gorebiliriz.
+
+Cluster'imizi docker'in icinde k3d ile calistirdigimiz icin, yapmamiz gereken bir kac hazirlik var. Pod'a cluster'in disindan acilan port yeterli olmayacak, eger cluster'a konteynerin icinden erismek istiyorsak.
+
+Oncelikle konteynerlarimizi gorelim. `$ docker ps`
+
+![alt](k3d_docker_ps.png)
+
+Isin guzel yani, k3d bizlere API'ye baglanmamiz icin bizlere bir port hazirladi ve bu port 6443 ve ek olarak port 80'e baglanabiliriz. local 8081 to 80 in k3d-k3s-default-serverlb and local 8082 to 30080 in k3d-k3s-default-agent-0 acilmis olacak.
+
+`$ k3d cluster delete`
+`$ k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2`
+`$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/deployment.yaml`
+
+![alt](k3d_ports_open.png)
