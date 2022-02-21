@@ -149,3 +149,45 @@ $ kubectl apply -f manifests/deployment.yaml
 ```        
 
 ![alt](yaml_file.png)
+
+### Introduction to Debugging
+
+Kubernetes "self-healing" dedigimiz kendi kendi onarma ozelligine sahip. Eger pod'larda veyahut konteynerlarda bir seyler ters giderse biz developerlarin is yuku Kubernetes sayesinde azalmis durumda. Mudahele edilmesi gereken yerlerde veyahut con problemleri yasadigimiz zamanlar, muhtemel tum senaryolari teker teker elemine etmek gerekir. Bunu sistematik bir sekilde saglayabilmemeiz icin ise anahtar olgu her seyi sorgulamaktir. Bu sorgulamalari Kubernetes'te `kubectl describe` ve `kubectl logs` komutlarini kullanarak yapabiliriz.
+
+- `kubectl describe` bize kaynak hakkinda hemen hemen her seyi soyler.
+- `kubectl logs` ise yazilimda problem olusturan kisimlar hakkkinda bilgi verip, kolay takip etmemizi saglar.
+
+
+Oncelikle farkli bir yontemle (github'dan cekerek) bir ke daha deployment yapalim:
+
+```COMMAND
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app1/manifests/deployment.yaml
+  deployment.apps/hashgenerator-dep unchanged
+```  
+
+Daha sonrasinda ise **describe** komutumuzu kullanalim:
+
+```COMMAND
+$ kubectl describe deployment hashgenerator-dep
+```
+
+![alt](describe.png)
+
+Buun yani sira, **describe** komutunu daha spesifik olarakta kullanabiliriz. Ornegin, *pod*'lar' hakkinda bilgi almak icin.
+
+`$ kubectl describe pod hashgenerator-dep-548d4d6c8d-mrnsl`
+
+![alt](pods.png)
+
+
+Simdi ise *logs*'larimizi kontrol edebilriz.
+
+`$ kubectl logs hashgenerator-dep-548d4d6c8d-mrnsl`
+
+![alt](logs.png)
+
+Son asamada ise [Lens "The Kubernetes IDE"](https://k8slens.dev/) Kubernetes platformunu kullanarak grafik display metoduyla da incelemede bulunabiliriz.
+
+![alt](workloads_overview.png)
+
+![alt](workloads_pods.png)
