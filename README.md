@@ -90,3 +90,62 @@ $ kubectl get deployments
 NAME                READY   UP-TO-DATE   AVAILABLE   AGE
 hashgenerator-dep   1/1     1            1           13m
 ```
+
+### Declarative configuration with YAML
+
+Daha onceden deployment'imizi olusturmustuk.
+
+`$ kubectl create deployment hashgenerator-dep --image=jakousa/dwk-app1`
+
+Eger dilersek olusturdugumuz bu deployment'i istedigimiz gibi olceklendirebiliriz. Replica sayilarini belirleyebilir ve guncellenmesini saglayabiliriz.
+
+```COMMAND
+$ kubectl scale deployment/hashgenerator-dep --replicas=4
+
+$ kubectl set image deployment/hashgenerator-dep dwk-app1=jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+```
+
+Deklare ederken, duzenlenme seklini belirleyebiliriz. Bunun orneklerinden bir tanesi ise ilusturulan konteyneri silmek:
+
+```COMMAND
+$ kubectl delete deployment hashgenerator-dep
+  deployment.apps "hashgenerator-dep" deleted
+```
+
+Bu kisimda yeni bir klasor olusturalim `manifests` adinda ve icinde `deployment.yaml` dosyasi bulunsun. Dosyanin icerigi ise asagidaki gibi olsun.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hashgenerator-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hashgenerator
+  template:
+    metadata:
+      labels:
+        app: hashgenerator
+    spec:
+      containers:
+        - name: hashgenerator
+          image: jakousa/dwk-app1:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+```  
+
+Goruldugu uzere ***docker-compose*** dosyalarina cok benziyor.
+
+* *kind:Deployment* bize iceriginin ne tur olddugunu deklare ediyor.
+* *name:hashgenerator-dep* ise metadatanin ismini deklare ediyor.
+* *replicas:1* kac tane replica oldugunu deklare ediyor.
+* Genel olarak ise ismi olan bir imaj'dan konteynar oldugunu da deklare ediyoruz.
+
+Bu deployment'i uygulamaya sokmak icin ise:
+
+```COMMAND
+$ kubectl apply -f manifests/deployment.yaml
+  deployment.apps/hashgenerator-dep created
+```        
+
+![alt](yaml_file.png)
