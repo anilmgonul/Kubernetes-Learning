@@ -266,4 +266,62 @@ $ kubectl apply -f manifests/service.yaml
   service/hashresponse-svc created
 ```
 
-Buradan [http://localhost:8082](http://localhost:8082/) erisim saglayabiliriz.    
+Buradan [http://localhost:8082](http://localhost:8082/) erisim saglayabiliriz.
+
+### What is an Ingress?
+
+Ingress, Kubernetes’de çalıştırdığınız uygulamanın kullanıcılar tarafından erişilmesine izin vererek dış trafiği Kubernetes servislerine bağlar. Bazı diğer bileşenlerin, nesnelerin veya hizmetlerin aksine, ingress controller bir küme başlatıldığında otomatik olarak başlamaz. Doğru ingress controller seçmek için, Kubernetes kümenize gelen trafiği ve yükü göz önünde bulundurarak karar verilmelidir. [Kaynak](https://medium.com/devopsturkiye/kubernetes-ingress-controllers-4b12458a5ba2#:~:text=Ingress%2C%20Kubernetes'de%20%C3%A7al%C4%B1%C5%9Ft%C4%B1rd%C4%B1%C4%9F%C4%B1n%C4%B1z%20uygulaman%C4%B1n,k%C3%BCme%20ba%C5%9Flat%C4%B1ld%C4%B1%C4%9F%C4%B1nda%20otomatik%20olarak%20ba%C5%9Flamaz.)
+
+Ingress'e gecmek icin Ingress resources, kaynaklarini olusturmami gerekir. Ingress, gelen trafigi Service'e yonlendirecektir, fakat daha once `service.yaml` dosyasinda kullandigimiz **NordPort** Service bunu yapmayacaktir. O sebeple:
+
+```COMMAND
+$ kubectl delete -f manifests/service.yaml
+  service "hashresponse-svc" deleted
+```      
+
+ClusterIP turu hizmet kaynagı, Service'e cluster'dan erisilebilen bir InternalIP verir.
+
+Asagidaki service.yaml dosyasi TCP trafigini port 2345'ten port 3000'e yonlendirir.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hashresponse-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: hashresponse
+  ports:
+    - port: 2345
+      protocol: TCP
+      targetPort: 3000
+```      
+
+Ingress dosyasindan ise beklentimiz:
+1. Ingress olmasini deklare etmesi
+2. Tum trafigi Service'imize yonlendirmesi
+
+**ingress.yaml**
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dwk-material-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hashresponse-svc
+            port:
+              number: 2345
+```              
+
+Bu asamada, sonuclari gormek icin her seyi uygulayabiliriz.
+
+![alt](ingress.png)
