@@ -234,3 +234,36 @@ Isin guzel yani, k3d bizlere API'ye baglanmamiz icin bizlere bir port hazirladi 
 `$ kubectl apply -f https://raw.githubusercontent.com/kubernetes-hy/material-example/master/app2/manifests/deployment.yaml`
 
 ![alt](k3d_ports_open.png)
+
+### What is a Service?
+
+Deployment resources dagitim kaynaklariyla ilgilenirken, Service resources uygulamanin disaridan cluster'a baglanma hizmetiyle ilgilenecektir. Bir `service.yaml` dosyasi olusturalim ve asagidaki olusumlari saglamasini inceleyelim:
+
+1. Service istegimizi deklare etmesi
+2. hangi porttan dinleme yapacagimizi deklare etmesi
+3. Uygulamaya gonderilecek isteklerin nereye yonlendirilecegini deklare etmesi
+4. Gonderilen isteklerin hangi port uzerinden gidecegini deklare etmesi
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hashresponse-svc
+spec:
+  type: NodePort
+  selector:
+    app: hashresponse # This is the app as declared in the deployment.
+  ports:
+    - name: http
+      nodePort: 30080 # This is the port that is available outside. Value for nodePort can be between 30000-32767
+      protocol: TCP
+      port: 1234 # This is a port that is available to the cluster, in this case it can be ~ anything
+      targetPort: 3000 # This is the target port
+```    
+
+```
+$ kubectl apply -f manifests/service.yaml
+  service/hashresponse-svc created
+```
+
+Buradan [http://localhost:8082](http://localhost:8082/) erisim saglayabiliriz.    
