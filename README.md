@@ -325,3 +325,42 @@ spec:
 Bu asamada, sonuclari gormek icin her seyi uygulayabiliriz.
 
 ![alt](ingress.png)
+
+
+### Introduction to Storage
+
+Docker'da da volume, disk bolumunde kullanilan hacim alani, var ancak bir sekilde kolay yonetilebilir degil, cunku belli limitleri var. Docker'da volume diskte veya bir baska konternerda directory olarak mevcut. Bunun yani sira, Kubernetes bir cik farkli volume tiplerini destekliyor. Pod'lar es zamanli olarak birden fazla volume'lara sahip olabilirler. Ancak bilinmesi gereken, pod'lar zarar gorurse, icinde sakladigimiz veriyi kaybederiz. Ek olarak, eger bir pod'u baska bir node'dan cikartirsak/yurutursek, volume'un icerigini kaybederiz. Volume,lara veriyi kaydetmek icin ihtiyacimiz var. Kubernetes'in destekledigi birden fazla volume turleri:
+
+- Local Node Types – emptyDIR, hostpath, local
+- File Sharing types – nfs
+- Storage types – fc, iscsi
+- Special Purpose Types – Secret, Git repo
+- Cloud Provider types – Vsphere, Cinder, awsElasticBlockStore,     azureDisk, gcepersistentDisk
+- Distributed filesystem types – glusterfs, cephfs
+- Special type – persistent volume, persistent volume claim
+
+1. ***emptyDir*** pod calisana kadar veriyi sadece memory'de yazar. Bu da demektir ki, verimiz pod silindiginde veri de gider Yani persistent, kalici degildir.
+2. ***hostpath***, ***local***, ***fc*** ise persistent yani kalici turde olanlardir. Sadece local node'larda var olurlar. Diger node'larla iletisim halinde olmasini saglamak icin geleneksel yontemlerle volume paylasimini setup yapmamiz gerekir.
+3. Son olarak, ***persistent*** turundeki volume'lar ise node'lar arasinda erisim saglar.  
+
+#### How to use Kubernetes volumes to pod and containers?
+
+Deployment dosyamizda pod'larda calismasi icin opsiyon olarak **Volume**'u isim ve turunu deklare etmemiz gerekiyor. Bunun yani sira, **volumeMounts**'i *mountPath* olarak kullanarak konteynerda nereye birlestirilmesi gerektigini dekralere etmeliyiz. Volume ismi unique, tek olmali ve konteynerda spesifik olarak deklare edilmeli. Aksi takdirde, hata ile karsilasiriz.
+
+```yaml
+spec:
+volumes:
+– name: volume
+hostPath:
+      path: /mnt/data
+containers:
+– name: container1-nginx
+image: nginx
+volumeMounts:
+– name: volume
+mountPath: “/var/nginx-data”
+– name: container2-tomcat
+image: tomcat
+```
+
+Yukarida goruldugu uzere, volume ismi: "volume", yolu: "/mnt/data" olarak, spesifik deklarasyon: "spec" olarak kullanilacak bu pod'un icerisinde. Birlesecegi yer "“/var/nginx-data”" ve konteynerin adi ise "container1-nginx".
