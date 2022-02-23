@@ -401,7 +401,7 @@ Bunun yani sira, olusturulan Namespace'leri gormek icin:
 
 `$ kubectl get namespace`
 
-![alt](get_namepace.png)
+![alt](get_namespace.png)
 
 Yukarida goruldugu uzere, system tarafindan olusturulan 3 Namespace'i ve bizim olusturdugumuz Namespace'i gorebiliriz.
 
@@ -479,4 +479,3 @@ $ kubectl get pods
 NAME    READY   STATUS    RESTARTS   AGE
 mypod   1/1     Running   0          17m
 ```
-        
