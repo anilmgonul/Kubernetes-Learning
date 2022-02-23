@@ -364,3 +364,119 @@ image: tomcat
 ```
 
 Yukarida goruldugu uzere, volume ismi: "volume", yolu: "/mnt/data" olarak, spesifik deklarasyon: "spec" olarak kullanilacak bu pod'un icerisinde. Birlesecegi yer "“/var/nginx-data”" ve konteynerin adi ise "container1-nginx".
+
+
+### What is a Namespace?
+
+Kubernete'in uzerinde birden fazla servisler olusturdukca basit gorevler ve aktiviteler dahi kompleks bir hal almakta. Ornegin, yazilim takimlari ayni isimde Kubernetes Service'lerini ve Deployment'lari isimlendiremezler. Binlerce pod'larimizin olacagini dusunursek, bunlari teker teker siralamak ve isimlendirmek hayli vakit alacaktir onlari yonetebilmemiz icin. Bu sadece Iceber'in gorunen kismi. Bu sebepten oturu, Kubernetes Namespace'e ihtiyacimiz ve bu sayade Kubernetes kaynaklarini daha kolay bir sekilde yonetebiliriz.
+
+Namespace'i Kubernetes cluster'inin icinde olusturdugumuz virtual, sanal bir cluster olarak dusunebiliriz. Yani kume icinde olusturulan sanal bir kume. Bu kumeler ise mantiksal bir bicimde birbirlerinden izole edilmislerdir. Bu kumelenme bize ve yazilim takimlarina organizasyon, uygulamanin guvenligi ve performans olarak yardimci olacaktir.
+
+`default` Namespace; genel itibariyle Kubernetes dagitimlarinda default olarak adlandirilan bir cluster'dir. Acikcasi, 3 farkli Namespace'lere sahibiz: `default`, `kube-system`(Kubernetes komponentleri icin kullanilir) ve `kube-public`(public kaynaklar icin kullanilir).
+
+#### Creating Namespace
+
+Namespace olusturmak icin cekinmemize gerek yoktur. Buyuk organizasyonlar goz onune alindiginda, takimlarin deploy ettikleri yazilimlar ile override yapilma olasiligi var ancak, Namespace bize penalti vermez, aksine performans arttici bir unsur olarak gorulur.
+
+Namespace'i olusturmak icin bir satir komut yeterli olacaktir. Simdi ise, "test" adinda bir Namespace olusturalim:
+
+```COMMAND
+$ kubectl create namespace test
+namespace/test created
+```
+
+Bunun yani sira, YAML dosyasi olarakta herhangi bir Kubernetes kaynagi gibi Namespace olusturabiliriz.
+
+```yaml
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: test
+  labels:
+    name: test
+kubectl apply -f test.yaml
+```  
+
+Bunun yani sira, olusturulan Namespace'leri gormek icin:
+
+`$ kubectl get namespace`
+
+![alt](get_namepace.png)
+
+Yukarida goruldugu uzere, system tarafindan olusturulan 3 Namespace'i ve bizim olusturdugumuz Namespace'i gorebiliriz.
+
+#### Creating Resources in the Namespace
+
+Pod olusturmak icin basit bir YAML dosyasini inceleyelim.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  labels:
+    name: mypod
+spec:
+  containers:
+  - name: mypod
+    image: nginx
+```
+
+Yukarida goruldugu uzere, herhangi bir yerde `namespace`'den bahsetmedik. Eger bu dosya icin `kubectl apply` komutunu kullanip calistirirsak, Pod'u su anki aktif namespace'de olusturacaktir ve bu da `default` namespace'i olacaktir degirtirmedigimiz muddetce.
+
+Iki tur yontem vardir hangi Namespace'i olusturacagimizi Kubernetes'e soylemek icin. Ilk olarak `--namespace` etiketini kullanabiliriz.
+
+`$ kubectl apply -f pod.yaml --namespace=test`
+
+Bununla birlikte, YAML dosyasinda da ***spesifik(spec)*** bir sekilde belirtebiliriz.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  namespace: test
+  labels:
+    name: mypod
+spec:
+  containers:
+  - name: mypod
+    image: nginx
+```
+
+#### Viewing resouces in the Namespace
+
+Pod'umuzu bulmaya calisalim:
+
+```COMMAND
+$ kubectl get pods
+No resources found.
+```
+
+Goremiyoruz. Bunun sebebi ise, tum komutlar aktif olan Namespacei'e karsi calisir. Pod'umuzu bulabilmek icin, `--namespace` etiketini kullanmaliyiz.
+
+![alt](pod_namespace.png)
+
+Ilk izlenim, aktif namespace'imizin "default" namespace olarak ortaya cikiyor olmasi. Namespace'imizi YAML dosyasinda spesifik olarak deklare ettigimiz takdirde, butun Kubernetes komutlari aktif olarak o namespace'i kullanacak.
+
+Maalesef ki, aktif Namespace'i `kubectl` ile yonetmek kolay degil. Bu sebepten oturu, kullanabilecegimiz guzel bir tool var : `kubens`. Ek bilgi olarak "kubens" Turk yazilimci [Ahmet Alp Balkan](https://ahmet.im/) tarafindan olusturuldu.
+
+"kubens" komutunu kullandigimizda tum Namespace'leri gorebiliriz ve aktif olarak calisan ise renklendirilmis olarak karsimiza cikar.
+
+![alt](kubens.png)
+
+Aktif olan Namespace'i degistirmek icin :
+
+`$ kubens test`
+
+![alt](kubens_test.png)
+
+Bu asamada, `kubectl` komutunu kullanirsak eger, Namespace'imiz **"default"** yerine **"test"** oldugu icin, *"namespace"* etiketini kullanmadan da test namespace'in icindeki Pod'umuzu gorebiliriz.
+
+```COMMAND
+$ kubectl get pods
+
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          17m
+```
+        
