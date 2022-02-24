@@ -484,7 +484,7 @@ mypod   1/1     Running   0          17m
 
 ConfigMap Konteyner imaji icindeki konfigurasyon detaylarini aryi olarak tutmaya yarayan bir olgudur. Calisir durumdaki pod'larda ve konteynerlarda degisiklik yapmak icin YAML dosyasini yeniden olusturup tekrardan deoploy etmemiz gerekecek. Bu durumda, ConfigMap bizlere pod uzerinde bir degisiklik yapmadan disaridan istedigimiz degisiklikleri yapmamizi saglar.
 
-Bu asamada, ConfigMap'in nasil uygulandigini gorelim. Oncelikle "webnginx.yaml" adinda bir dosya olusturalim. Amacimiz, 'Hello Nginx!' icerikli sayfayi 'Hello World' degeriyle degistirmek. STRING ve PATH veri alanimizi olusturacagimiz pod'lara baglayacagiz. Bunun yani sira `minikube` cluster'ini kullanacagiz.
+Bu asamada, ConfigMap'in nasil uygulandigini gorelim. Oncelikle "webnginx.yaml" adinda bir dosya olusturalim. Amacimiz, 'Merhaba Nginx!' icerikli sayfayi 'Hello World' degeriyle degistirmek. STRING ve PATH veri alanimizi olusturacagimiz pod'lara baglayacagiz. Bunun yani sira `minikube` cluster'ini kullanacagiz.
 
 ```yaml
 apiVersion: v1
@@ -578,4 +578,66 @@ Simdi ise pod'umuzu olusturalim:
 $ minikube kubectl create -- -f webapp.yaml --validate=false
 pod/webapp created
 ```
-                  
+
+Olusturulan bu pod'a CLI ile erisim saglayip configmap icinde belirtilen degerler index.html dosyasina yazilip yazilmadigi kontrol edelim. Pod'umuza erisim saglamak icin `$ minikube kubectl exec webapp — -it /bin/sh` komutunu kullanmamiz gerekiyor. Ardindan configmap icerisinde belirtilen dizinde sayfadaki degisikligi kontrol edelim, `# cat /usr/share/nginx/html/index`
+
+![alt](configmap.png)
+
+ConfigMap'imiz ile karsilastirmak icin: `$ minikube kubectl describe configmap webnginx`
+
+```command
+$ minikube kubectl describe configmap webnginx
+Name:         webnginx
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+PATH:
+----
+/usr/share/nginx/html/index.html
+STRING:
+----
+Merhaba Nginx!!!
+
+BinaryData
+====
+
+Events:  <none>
+```
+dosyamizin icindeki STRING degerini 'Hello World' olarak degistirelim. `$ minikube kubectl edit configmaps webnginx`
+
+![alt](configmap_edit.png)
+
+Editlendigine dair bir uyari alacagiz:
+
+```cmd
+$ minikube kubectl edit configmaps webnginx
+configmap/webnginx edited
+```
+
+Ardindan tekrardan pod'umuzun icine girerek `# cat /usr/share/nginx/html/index.html` komutunu calistiralim.
+
+```command
+Name:         webnginx
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+PATH:
+----
+/usr/share/nginx/html/index.html
+STRING:
+----
+HELLO WORLD!
+
+BinaryData
+====
+
+Events:  <none>
+```
+
+> [Kubernetes’de ConfigMap Kullanmak-Özgür AYDIN](https://www.cozumpark.com/kubernetesde-configmap-kullanmak/)
