@@ -479,3 +479,103 @@ $ kubectl get pods
 NAME    READY   STATUS    RESTARTS   AGE
 mypod   1/1     Running   0          17m
 ```
+
+### ConfigMap
+
+ConfigMap Konteyner imaji icindeki konfigurasyon detaylarini aryi olarak tutmaya yarayan bir olgudur. Calisir durumdaki pod'larda ve konteynerlarda degisiklik yapmak icin YAML dosyasini yeniden olusturup tekrardan deoploy etmemiz gerekecek. Bu durumda, ConfigMap bizlere pod uzerinde bir degisiklik yapmadan disaridan istedigimiz degisiklikleri yapmamizi saglar.
+
+Bu asamada, ConfigMap'in nasil uygulandigini gorelim. Oncelikle "webnginx.yaml" adinda bir dosya olusturalim. Amacimiz, 'Hello Nginx!' icerikli sayfayi 'Hello World' degeriyle degistirmek. STRING ve PATH veri alanimizi olusturacagimiz pod'lara baglayacagiz. Bunun yani sira `minikube` cluster'ini kullanacagiz.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webnginx
+  namespace: default
+data:
+  STRING: Merhaba Nginx!!!
+  PATH: /usr/share/nginx/html/index.html
+```
+
+`minikube kubectl create -- -f Webnginx.yaml` komutuyla ConfigMap'imizi olusturacagiz.
+
+```COMMAND
+$ minikube kubectl create -- -f Webnginx.yaml
+configmap/webnginx created
+```
+
+Olusturdugumuz ConfigMap'i gormek icin:
+
+```COMMAND
+$ minikube kubectl get configmaps
+NAME               DATA   AGE
+kube-root-ca.crt   1      3m8s
+webnginx           2      81s
+```
+
+
+Bunun yani sira, `describe` komutuyla tanimlari da gorebiliriz.
+
+```COMMAND
+$ minikube kubectl describe configmap webnginx
+Name:         webnginx
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+PATH:
+----
+/usr/share/nginx/html/index.html
+STRING:
+----
+Merhaba Nginx!!!
+
+BinaryData
+====
+
+Events:  <none>
+
+```
+
+Siradaki islem ise, bir pod olusturmak "webapp.yaml" ve icine asagidaki degerleri yazalim.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+ name: webapp
+ labels:
+     app: webapp
+spec:
+   containers:
+   - image: nginx
+     name: nginx
+     ports:
+     - containerPort: 80
+     command: ["/bin/sh", "-c", "echo $(DATA_STRING) > $(DATA_PATH); sleep 3600"]
+     env:
+      - name: DATA_STRING
+        valueFrom:
+           configMapKeyRef:
+               name: webnginx
+               key: STRING
+               optional: true
+      - name: DATA_PATH
+        valueFrom:
+           configMapKeyRef:
+               name: webnginx
+               key: PATH
+               optional: true
+```
+
+Yukarida goruldugu uzere, bir adet konteynar iceren bir pod'umuz var ve konteynerin icinde nginx imaj'imiz bulunuyor. **command** kisminda configmap olarak hazirlanan veriler tanimlanmis durumda. **env** kisminda ise tanimlanan verilerin configmap ile iliskisi kuruluyor. **configMapKeyRef** kisminda ise daha onceden olusturulan configmap bilgisi yer aliyor.
+
+Simdi ise pod'umuzu olusturalim:
+
+```command
+$ minikube kubectl create -- -f webapp.yaml --validate=false
+pod/webapp created
+```
+                  
